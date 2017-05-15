@@ -30,6 +30,10 @@ namespace NJsonApi.Web
             this.serializer = serializer;
         }
 
+        /// <summary>
+        /// Filter invalid JSON API calls 
+        /// </summary>
+        /// <param name="context">MVC Context of the action that will be executed</param>
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             var isValidContentType = context.HttpContext.Request.ContentType == configuration.DefaultJsonApiMediaType;
@@ -40,18 +44,21 @@ namespace NJsonApi.Web
 
             if (isControllerRegistered)
             {
+                //Validate that the call not tries to "mutate the state"/ Method <> "GET" while the content type is not JSON API (that is not supported)
                 if (!isValidContentType && context.HttpContext.Request.Method != "GET")
                 {
                     context.Result = new UnsupportedMediaTypeResult();
                     return;
                 }
 
+                //Validate that the GET requests define a valid (*/* or JSON API) Accept header 
                 if (!ValidateAcceptHeader(context.HttpContext.Request.Headers))
                 {
                     context.Result = new StatusCodeResult(406);
                     return;
                 }
 
+                // No sure (force load the content of the body or parse it from a JSONAPI doc?)
                 if (actionDescriptorForBody != null)
                 {
                     var json = (string)context.ActionDescriptor.Properties[actionDescriptorForBody.Name];
@@ -107,6 +114,8 @@ namespace NJsonApi.Web
                     }
                 }
 
+                //When the requested controller is not register and the content type is do valid a 406 is returned (NOT ACCEPTABLE)
+                // As there is not contorller althought the content type is valid we cannot generate the content requested
                 if (isValidContentType)
                 {
                     context.Result = new ContentResult()
@@ -118,6 +127,10 @@ namespace NJsonApi.Web
             }
         }
 
+        /// <summary>
+        /// Serialize the generated result in case it is valid and for a register Controller 
+        /// </summary>
+        /// <param name="context"></param>
         public override void OnActionExecuted(ActionExecutedContext context)
         {
             if (context.Result == null || context.Result is NoContentResult)
@@ -150,6 +163,7 @@ namespace NJsonApi.Web
                     return;
                 }
 
+                //Once all validation passed the result is transformed
                 var jsonApiContext = new Context(
                     new Uri(context.HttpContext.Request.GetDisplayUrl()),
                     relationshipPaths);

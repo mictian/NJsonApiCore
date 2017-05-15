@@ -23,10 +23,11 @@ namespace NJsonApi.Web
             this.serializer = serializer;
         }
 
-        public void OnResourceExecuting(ResourceExecutingContext context)
+        public void OnResourceExecuting(ResourceExecutingContext context) // NO IDEA WHAT THIS DOES. It seems that read all the content of the body/ Like a transformation
         {
             var actionDescriptorForBody = context.ActionDescriptor.Parameters.SingleOrDefault(
                     x => x.BindingInfo != null && x.BindingInfo.BindingSource == BindingSource.Body);
+
             if (actionDescriptorForBody == null)
             {
                 return;
@@ -45,6 +46,10 @@ namespace NJsonApi.Web
             }
         }
 
+        /// <summary>
+        /// Handle error and bad responses by convert them into JSON API format
+        /// </summary>
+        /// <param name="context">Container of the generated response</param>
         public void OnResourceExecuted(ResourceExecutedContext context)
         {
             if (context.Result == null || context.Result is NoContentResult)

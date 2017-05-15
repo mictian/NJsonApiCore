@@ -1,17 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NJsonApi.Serialization;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.AspNetCore.StaticFiles.Infrastructure;
 using Microsoft.Net.Http.Headers;
-using Newtonsoft.Json.Serialization;
+using NJsonApi.Serialization;
 using NJsonApi.Web.MVCCore.Serialization;
 
 namespace NJsonApi.Web.MVCCore.HelloWorld
@@ -46,7 +41,7 @@ namespace NJsonApi.Web.MVCCore.HelloWorld
            
             services.AddSingleton<ILinkBuilder, LinkBuilder>();
             services.AddSingleton(nJsonApiConfig.GetJsonSerializer());
-            services.AddSingleton<IJsonApiTransformer, JsonApiTransformer >();
+            services.AddSingleton<IJsonApiTransformer, JsonApiTransformer>();
             services.AddSingleton(nJsonApiConfig);
             services.AddSingleton<TransformationHelper>();
         }

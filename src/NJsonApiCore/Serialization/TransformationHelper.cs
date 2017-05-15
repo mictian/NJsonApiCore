@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using NJsonApi.Utils;
+using NJsonApiCore.Serialization.Representations.Resources;
 
 namespace NJsonApi.Serialization
 {
@@ -24,6 +25,13 @@ namespace NJsonApi.Serialization
             this.linkBuilder = linkBuilder;
         }
 
+        /// <summary>
+        /// Given an action result and the generated list of resources generated the best resource to properly representthe final result.
+        /// This method is needed as internally the transformation is done with a List of object due to the result can be a list of entities or one single entity
+        /// </summary>
+        /// <param name="resource">Original Action result</param>
+        /// <param name="representationList">Computed resources list (this is a list as an internal decision)</param>
+        /// <returns>ResourceCollection or SingleResource</returns>
         public IResourceRepresentation ChooseProperResourceRepresentation(object resource, IEnumerable<SingleResource> representationList)
         {
             return resource is IEnumerable ?
@@ -126,6 +134,11 @@ namespace NJsonApi.Serialization
             }
         }
 
+        /// <summary>
+        /// Given if an object generates a List of objects with it or cast the input parameter into a such a list if it is possible
+        /// </summary>
+        /// <param name="nestedObject">Object to cast or wrap</param>
+        /// <returns>List of object</returns>
         public List<object> UnifyObjectsToList(object nestedObject)
         {
             var list = new List<object>();
@@ -140,8 +153,14 @@ namespace NJsonApi.Serialization
             return list;
         }
 
+        /// <summary>
+        /// Validates that the passed in type is valid to be JSON-API serialized
+        /// </summary>
+        /// <exception cref="NotSupportedException">If the type if not serializable</exception>
+        /// <param name="innerObjectType">Type of the action result that will be serialized</param>
         public void VerifyTypeSupport(Type innerObjectType)
         {
+            //TODO: What the aim of this IMetaDataWrapper??
             if (typeof(IMetaDataWrapper).IsAssignableFrom(innerObjectType))
             {
                 throw new NotSupportedException(string.Format("Error while serializing type {0}. IEnumerable<MetaDataWrapper<>> is not supported.", innerObjectType));
@@ -153,6 +172,11 @@ namespace NJsonApi.Serialization
             }
         }
 
+        /// <summary>
+        /// In case the action result is a <see cref="IMetaDataWrapper"/> wrap it
+        /// </summary>
+        /// <param name="objectGraph">Action result to check</param>
+        /// <returns>Inner object in case of IMetaDaraWrapper or just the input parameter</returns>
         public object UnwrapResourceObject(object objectGraph)
         {
             if (!(objectGraph is IMetaDataWrapper))
@@ -163,6 +187,12 @@ namespace NJsonApi.Serialization
             return metadataWrapper.GetValue();
         }
 
+        /// <summary>
+        /// Given an object to be serialized, extract from it its metadata.
+        /// In order to return custom metadata the object must implement <see cref="IMetaDataWrapper"/> interface
+        /// </summary>
+        /// <param name="objectGraph">Object from which metadata is extracted</param>
+        /// <returns>Metadata to be serialized</returns>
         public Dictionary<string, object> GetMetadata(object objectGraph)
         {
             if (objectGraph is IMetaDataWrapper)
@@ -173,6 +203,13 @@ namespace NJsonApi.Serialization
             return null;
         }
 
+        /// <summary>
+        /// Given a single DTO object (obtained from an action result) transform it/generate the corresponding Resource
+        /// </summary>
+        /// <param name="objectGraph">Single Action result</param>
+        /// <param name="resourceMapping">ResourceMapping used to extract from the object the data needed to create the Resource</param>
+        /// <param name="context">Serialization context</param>
+        /// <returns>New Resource</returns>
         public SingleResource CreateResourceRepresentation(
             object objectGraph,
             IResourceMapping resourceMapping,
@@ -183,7 +220,9 @@ namespace NJsonApi.Serialization
             result.Id = resourceMapping.IdGetter(objectGraph).ToString();
             result.Type = resourceMapping.ResourceType;
             result.Attributes = resourceMapping.GetAttributes(objectGraph);
-            result.Links = new Dictionary<string, ILink>() { { "self", linkBuilder.FindResourceSelfLink(context, result.Id, resourceMapping) } };
+            
+            result.Links = new LinkCollection();
+            result.Links.Add(linkBuilder.FindResourceSelfLink(context, result.Id, resourceMapping));
 
             if (resourceMapping.Relationships.Any())
             {
@@ -196,6 +235,7 @@ namespace NJsonApi.Serialization
         public Dictionary<string, Relationship> CreateRelationships(object objectGraph, string parentId, IResourceMapping resourceMapping, Context context)
         {
             var relationships = new Dictionary<string, Relationship>();
+
             foreach (var linkMapping in resourceMapping.Relationships)
             {
                 var relationshipName = linkMapping.RelationshipName;
@@ -263,14 +303,24 @@ namespace NJsonApi.Serialization
                 }
 
                 if (relLinks.Self != null || relLinks.Related != null)
+                {
                     rel.Links = relLinks;
+                }
 
                 if (rel.Data != null || rel.Links != null)
+                {
                     relationships.Add(relationshipName, rel);
+                }
             }
             return relationships.Any() ? relationships : null;
         }
 
+        /// <summary>
+        /// Validates that the passed in type is register to be serialized (handle by the JSON-API converter)
+        /// </summary>
+        /// <exception cref="MissingMappingException">Exception thrown when the type is not regiter in the configuration</exception>
+        /// <param name="type">Type to ask for</param>
+        /// <param name="config">Configuration containing register types and its metadata</param>
         public void AssureAllMappingsRegistered(Type type, IConfiguration config)
         {
             if (!config.IsResourceRegistered(type))
@@ -279,10 +329,13 @@ namespace NJsonApi.Serialization
             }
         }
 
-        public Dictionary<string, ILink> GetTopLevelLinks(Uri requestUri)
+        public LinkCollection GetTopLevelLinks(Uri requestUri, IResourceMapping resourceMapping)
         {
-            var topLevel = new Dictionary<string, ILink>();
-            topLevel.Add("self", new SimpleLink(requestUri));
+            var topLevel = new LinkCollection();
+            topLevel.Add(new SimpleLink("self", requestUri));
+
+            topLevel.AddRange(resourceMapping.TopLevelLinks);
+
             return topLevel;
         }
     }

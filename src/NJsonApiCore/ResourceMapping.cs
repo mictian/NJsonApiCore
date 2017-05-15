@@ -3,11 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using NJsonApi.Serialization.Representations;
+using NJsonApiCore.Serialization.Representations.Resources;
 
 namespace NJsonApi
 {
     public class ResourceMapping<TEntity, TController> : IResourceMapping
     {
+        #region Pubilc Properties
         public Func<object, object> IdGetter { get; set; }
         public Action<object, string> IdSetter { get; set; }
         public Type ResourceRepresentationType { get; set; }
@@ -17,6 +20,9 @@ namespace NJsonApi
         public Dictionary<string, Expression<Action<object, object>>> PropertySettersExpressions { get; private set; }
         public List<IRelationshipMapping> Relationships { get; set; }
         public Type Controller { get; set; }
+        public LinkCollection Links { get; set ; }
+        public LinkCollection TopLevelLinks { get; set; }
+        #endregion
 
         public ResourceMapping()
         {
@@ -26,6 +32,8 @@ namespace NJsonApi
             PropertySetters = new Dictionary<string, Action<object, object>>();
             PropertySettersExpressions = new Dictionary<string, Expression<Action<object, object>>>();
             Relationships = new List<IRelationshipMapping>();
+            Links = new LinkCollection();
+            TopLevelLinks = new LinkCollection();
         }
 
         public ResourceMapping(Expression<Func<TEntity, object>> idPointer)
@@ -36,6 +44,8 @@ namespace NJsonApi
             PropertySetters = new Dictionary<string, Action<object, object>>();
             PropertySettersExpressions = new Dictionary<string, Expression<Action<object, object>>>();
             Relationships = new List<IRelationshipMapping>();
+            Links = new LinkCollection();
+            TopLevelLinks = new LinkCollection();
         }
 
         public void AddPropertyGetter(string key, Expression<Func<TEntity, object>> expression)

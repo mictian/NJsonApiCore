@@ -2,6 +2,9 @@
 
 namespace NJsonApi.Serialization.Representations
 {
+    /// <summary>
+    /// This class represent an error occured during the processing of the response and contains the JSON-API format complaint to show errors
+    /// </summary>
     public class Error
     {
         public Error()

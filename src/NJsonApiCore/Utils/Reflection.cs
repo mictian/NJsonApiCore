@@ -5,13 +5,23 @@ using System.Reflection;
 
 namespace NJsonApi.Utils
 {
+    /// <summary>
+    /// Utility class that provides reflection related functionality
+    /// </summary>
     public static class Reflection
     {
+        /// <summary>
+        /// Given an object returns its type ready to be used for JSON transformer
+        /// </summary>
+        /// <param name="objectGraph">Action result to be serialized</param>
+        /// <returns>Inner type for enumerables or object's type</returns>
         public static Type GetObjectType(object objectGraph)
         {
             Type objectType = objectGraph.GetType();
 
-            if (objectGraph is IMetaDataWrapper)
+            //TODO: Handle the case when the object is not generic.
+            //TODO: Why is really do this??
+            if (objectGraph is IMetaDataWrapper && objectType.GetTypeInfo().IsGenericType)
             {
                 objectType = objectGraph.GetType().GetGenericArguments()[0];
             }

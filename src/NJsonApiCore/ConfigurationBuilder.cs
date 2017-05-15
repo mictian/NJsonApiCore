@@ -70,6 +70,11 @@ namespace NJsonApi
             }
         }
 
+        /// <summary>
+        /// Indicates if the given controller type has one method to retrieve by id (and only by id) resources
+        /// </summary>
+        /// <typeparam name="TController">Type of the controller to examine</typeparam>
+        /// <returns>True if the controller implementes a GET by Id action, false otherwise</returns>
         private bool HasOnlyOneGetMethod<TController>()
         {
             // TODO this feels like a reproduction of logic, should be shared here and in the link builder

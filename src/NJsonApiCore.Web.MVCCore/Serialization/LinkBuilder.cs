@@ -21,6 +21,8 @@ namespace NJsonApi.Web.MVCCore.Serialization
         {
             var actions = descriptionProvider.From(resourceMapping.Controller).Items;
 
+            //It is assumed that a GET method to retrieve a resource by Id is implemetned and verified by the ConfigurationBuilder
+            //See ConfigurationBuilder class HasOnlyOneGetMethod method
             var action = actions.Single(a =>
                 a.HttpMethod == "GET" &&
                 a.ParameterDescriptions.Count(p => p.Name == "id") == 1);
@@ -28,36 +30,45 @@ namespace NJsonApi.Web.MVCCore.Serialization
             var values = new Dictionary<string, object>();
             values.Add("id", resourceId);
 
-            return ToUrl(context, action, values);
+            return CreateLink(context, action, values);
         }
 
         public ILink RelationshipRelatedLink(Context context, string resourceId, IResourceMapping resourceMapping, IRelationshipMapping linkMapping)
         {
             var selfLink = FindResourceSelfLink(context, resourceId, resourceMapping).Href;
             var completeLink = $"{selfLink}/{linkMapping.RelationshipName}";
-            return new SimpleLink(new Uri(completeLink));
+            return new SimpleLink("related", new Uri(completeLink));
         }
 
         public ILink RelationshipSelfLink(Context context, string resourceId, IResourceMapping resourceMapping, IRelationshipMapping linkMapping)
         {
             var selfLink = FindResourceSelfLink(context, resourceId, resourceMapping).Href;
             var completeLink = $"{selfLink}/relationships/{linkMapping.RelationshipName}";
-            return new SimpleLink(new Uri(completeLink));
+            return new SimpleLink("self", new Uri(completeLink));
         }
 
         // TODO replace with UrlHelper method once RC2 has been released
-        private SimpleLink ToUrl(Context context, ApiDescription action, Dictionary<string, object> values)
+
+        /// <summary>
+        /// Creates a new Link fr
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="action"></param>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        private SimpleLink CreateLink(Context context, ApiDescription action, Dictionary<string, object> values)
         {
             var template = TemplateParser.Parse(action.RelativePath);
             var result = action.RelativePath.ToLowerInvariant();
 
+            //for each parameter in the tempate relative path of the action, its values is extracted from the passed in values dictionary
             foreach (var parameter in template.Parameters)
             {
                 var value = values[parameter.Name];
                 result = result.Replace(parameter.ToPlaceholder(), value.ToString());
             }
 
-            return new SimpleLink(new Uri(context.BaseUri, result));
+            return new SimpleLink("self", new Uri(context.BaseUri, result));
         }
     }
 }

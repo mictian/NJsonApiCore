@@ -9,6 +9,12 @@ namespace NJsonApi.Web.MVCCore
 {
     internal static class ApiExplorerExtensions
     {
+        /// <summary>
+        /// Extension method to find the action group (representat of the invoked controller)
+        /// </summary>
+        /// <param name="provider">This</param>
+        /// <param name="controller">Executed controller type</param>
+        /// <returns>Controller representation on the .NET core way</returns>
         public static ApiDescriptionGroup From(this IApiDescriptionGroupCollectionProvider provider, Type controller)
         {
             foreach (var actionGroup in provider.ApiDescriptionGroups.Items)

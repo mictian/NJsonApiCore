@@ -11,6 +11,9 @@ using System.Linq;
 
 namespace NJsonApi.Serialization
 {
+    /// <summary>
+    /// Class responsible for transforming action results into JSON-API documents (to then be serialized as)
+    /// </summary>
     public class JsonApiTransformer : IJsonApiTransformer
     {
         private JsonSerializer serializer;
@@ -45,6 +48,12 @@ namespace NJsonApi.Serialization
             return result;
         }
 
+        /// <summary>
+        /// Transform a successful result into a JSON-API document. <seealso cref="CompoundDocument"/>
+        /// </summary>
+        /// <param name="objectGraph">Generated succesded result</param>
+        /// <param name="context">JSON-API transformation context</param>
+        /// <returns>JSON-API document. <seealso cref="CompoundDocument"/> This document is ready to be serialized</returns>
         public CompoundDocument Transform(object objectGraph, Context context)
         {
             Type innerObjectType = Reflection.GetObjectType(objectGraph);
@@ -63,8 +72,10 @@ namespace NJsonApi.Serialization
             var resourceList = transformationHelper.UnifyObjectsToList(resource);
             var representationList = resourceList.Select(
                 o => transformationHelper.CreateResourceRepresentation(o, resourceMapping, context));
+
             result.Data = transformationHelper.ChooseProperResourceRepresentation(resource, representationList);
-            result.Links = transformationHelper.GetTopLevelLinks(context.RequestUri);
+
+            result.Links = transformationHelper.GetTopLevelLinks(context.RequestUri, resourceMapping);
 
             if (resourceMapping.Relationships.Any())
             {

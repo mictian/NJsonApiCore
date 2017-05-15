@@ -1,5 +1,6 @@
 ﻿using NJsonApi.Conventions;
 using NJsonApi.Infrastructure;
+using NJsonApi.Serialization.Representations;
 using NJsonApi.Utils;
 using System;
 using System.Collections;
@@ -105,6 +106,18 @@ namespace NJsonApi
         {
             WithAllSimpleProperties();
             WithAllLinkedResources();
+            return this;
+        }
+
+        public ResourceConfigurationBuilder<TResource, TController> WithLink(ILink extraLink)
+        {
+            BuiltResourceMapping.Links.Add(extraLink);
+            return this;
+        }
+
+        public ResourceConfigurationBuilder<TResource, TController> WithTopLevelLink(ILink extraLink)
+        {
+            BuiltResourceMapping.TopLevelLinks.Add(extraLink);
             return this;
         }
 

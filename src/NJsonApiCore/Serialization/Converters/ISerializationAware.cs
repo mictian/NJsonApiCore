@@ -2,7 +2,7 @@
 
 namespace NJsonApi.Serialization.Converters
 {
-    internal interface ISerializationAware
+    public interface ISerializationAware
     {
         void Serialize(JsonWriter writer);
     }

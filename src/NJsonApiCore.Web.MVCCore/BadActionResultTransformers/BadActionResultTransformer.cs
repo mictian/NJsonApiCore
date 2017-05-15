@@ -6,6 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace NJsonApi.Web.MVCCore.BadActionResultTransformers
 {
+    /// <summary>
+    /// Transform a "Bad" result into a JSON API format.
+    /// This class use a pre-defined list of bad response transformers
+    /// </summary>
     public static class BadActionResultTransformer
     {
         private static readonly List<ICanTransformBadActions> badActionRegistry = new List<ICanTransformBadActions>();
